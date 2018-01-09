@@ -103,8 +103,6 @@ static int dwmci_data_transfer(struct dwmci_host *host, struct mmc_data *data)
 	u32 fifo_depth = (((host->fifoth_val & RX_WMARK_MASK) >>
 			    RX_WMARK_SHIFT) + 1) * 2;
 	
-	debug("%s: start\r\n", __func__);
-
 	size = data->blocksize * data->blocks / 4;
 	if (data->flags == MMC_DATA_READ)
 		buf = (unsigned int *)data->dest;
@@ -183,7 +181,6 @@ static int dwmci_set_transfer_mode(struct dwmci_host *host,
 	if (data->flags & MMC_DATA_WRITE)
 		mode |= DWMCI_CMD_RW;
 
-	debug("%s: mode=%lx\r\n", __func__, mode);
 	return mode;
 }
 
@@ -206,8 +203,6 @@ static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	u32 mask, ctrl;
 	ulong start = get_timer(0);
 	struct bounce_buffer bbstate;
-
-	debug("%s: start\r\n", __func__);
 
 	while (dwmci_readl(host, DWMCI_STATUS) & DWMCI_BUSY) {
 		if (get_timer(start) > timeout) {
@@ -262,8 +257,6 @@ static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		flags |= DWMCI_CMD_CHECK_CRC;
 
 	flags |= (cmd->cmdidx | DWMCI_CMD_START | DWMCI_CMD_USE_HOLD_REG);
-
-	debug("Sending CMD%d\n",cmd->cmdidx);
 
 	dwmci_writel(host, DWMCI_CMD, flags);
 
@@ -339,6 +332,7 @@ static int dwmci_setup_bus(struct dwmci_host *host, u32 freq)
 	 * then assume that host->bus_hz is source clock value.
 	 * host->bus_hz should be set by user.
 	 */
+	debug("%s: get_mmc_clk(freq=%d)\n", __func__, freq);
 	if (host->get_mmc_clk)
 		sclk = host->get_mmc_clk(host, freq);
 	else if (host->bus_hz)
@@ -347,13 +341,17 @@ static int dwmci_setup_bus(struct dwmci_host *host, u32 freq)
 		debug("%s: Didn't get source clock value.\n", __func__);
 		return -EINVAL;
 	}
-
+	debug("%s: sclk=%lu, freq= %u\r\n", __func__, sclk, freq);
 	if (sclk == freq)
 		div = 0;	/* bypass mode */
 	else
+	{
+		//div = DIV_ROUND_UP(sclk, 2 * freq);
 		div = DIV_ROUND_UP(2 * freq, sclk);
+		div = 3;
+	}
 
-	debug("%s: sclk=%lu, freq= %u, div= %d\r\n", __func__, sclk, freq, div);
+	debug("%s: clkdiv= %d\r\n", __func__, div);
 
 	dwmci_writel(host, DWMCI_CLKENA, 0);
 	dwmci_writel(host, DWMCI_CLKSRC, 0);
@@ -401,7 +399,8 @@ static int dwmci_set_ios(struct mmc *mmc)
 	struct dwmci_host *host = (struct dwmci_host *)mmc->priv;
 	u32 ctype, regs;
 
-	debug("Buswidth = %d, clock: %d\n", mmc->bus_width, mmc->clock);
+	debug("%s: Buswidth = %d, clock: %d\n",
+		 __func__, mmc->bus_width, mmc->clock);
 
 	dwmci_setup_bus(host, mmc->clock);
 	switch (mmc->bus_width) {
@@ -415,14 +414,20 @@ static int dwmci_set_ios(struct mmc *mmc)
 		ctype = DWMCI_CTYPE_1BIT;
 		break;
 	}
+	debug("%s: ctype = %d\n", __func__, ctype);
 
 	dwmci_writel(host, DWMCI_CTYPE, ctype);
 
 	regs = dwmci_readl(host, DWMCI_UHS_REG);
 	if (mmc->ddr_mode)
+	{
 		regs |= DWMCI_DDR_MODE;
+		debug("%s: DDR = %d\n", __func__, DWMCI_DDR_MODE);
+	}
 	else
+	{
 		regs &= ~DWMCI_DDR_MODE;
+	}
 
 	dwmci_writel(host, DWMCI_UHS_REG, regs);
 

@@ -669,7 +669,7 @@ static int sh_sdhi_set_ios_common(struct sh_sdhi_host *host, struct mmc *mmc)
 			       OPT_BUS_WIDTH_1 | (~OPT_BUS_WIDTH_M &
 			       sh_sdhi_readw(host, SDHI_OPTION)));
 
-	debug("clock = %d, buswidth = %d\n", mmc->clock, mmc->bus_width);
+	debug("%s: clock = %d, buswidth = %d\n", __func__, mmc->clock, mmc->bus_width);
 
 	return 0;
 }

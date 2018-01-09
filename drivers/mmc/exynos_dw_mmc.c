@@ -106,6 +106,7 @@ static int exynos_dwmci_core_init(struct dwmci_host *host)
 	/* request mmc clock vlaue of 52MHz.  */
 	sclk = get_mmc_clk(host->dev_index);
 	div = DIV_ROUND_UP(freq, sclk);
+	div = 5;
 	/* set the clock divisor for mmc */
 	set_mmc_clk(host->dev_index, div);
 

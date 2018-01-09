@@ -5,6 +5,7 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
+//#define DEBUG 1
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -179,6 +180,7 @@ static int exynos_get_pll_clk(int pllreg, unsigned int r, unsigned int k)
 		else
 			fout = m * (freq / (p * (1 << s)));
 	}
+	debug("%s: fout= %lu\n", __func__, fout);
 	return fout;
 }
 
@@ -826,7 +828,8 @@ static unsigned long exynos4_get_mmc_clk(int dev_index)
 	ratio = (ratio >> shift) & 0xf;
 	pre_ratio = (pre_ratio >> (shift + 8)) & 0xff;
 	uclk = (sclk / (ratio + 1)) / (pre_ratio + 1);
-
+	debug("%s: dev_index= %d, ratio= %u, pre_ratio= %u, uclk= %lu\n", 
+		__func__, dev_index, ratio+1, pre_ratio+1, uclk);
 	return uclk;
 }
 
@@ -853,7 +856,8 @@ static void exynos4_set_mmc_clk(int dev_index, unsigned int div)
 		addr = (unsigned int)&clk->div_fsys3;
 		dev_index -= 4;
 		/* MMC4 is controlled with the MMC4_RATIO value */
-		clear_bit = MASK_RATIO(dev_index);
+		//clear_bit = MASK_RATIO(dev_index);
+		clear_bit = MASK_PRE_RATIO(dev_index);
 		set_bit = SET_RATIO(dev_index, div);
 	} else {
 		addr = (unsigned int)&clk->div_fsys2;
@@ -861,7 +865,7 @@ static void exynos4_set_mmc_clk(int dev_index, unsigned int div)
 		clear_bit = MASK_PRE_RATIO(dev_index);
 		set_bit = SET_PRE_RATIO(dev_index, div);
 	}
-
+	debug("%s: dev_index= %d, set div= %u\n", __func__, dev_index, div+1);
 	clrsetbits_le32(addr, clear_bit, set_bit);
 }
 

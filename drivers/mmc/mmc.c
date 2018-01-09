@@ -502,6 +502,7 @@ static int mmc_send_ext_csd(struct mmc *mmc, u8 *ext_csd)
 	struct mmc_data data;
 	int err;
 
+	debug("%s: start\n", __func__);
 	/* Get the Card Status Register */
 	cmd.cmdidx = MMC_CMD_SEND_EXT_CSD;
 	cmd.resp_type = MMC_RSP_R1;
@@ -1099,6 +1100,7 @@ void mmc_set_clock(struct mmc *mmc, uint clock)
 static void mmc_set_bus_width(struct mmc *mmc, uint width)
 {
 	mmc->bus_width = width;
+	debug("%s: width= %d\n", __func__, width);
 
 	mmc_set_ios(mmc);
 }
@@ -1539,12 +1541,19 @@ static int mmc_startup(struct mmc *mmc)
 
 		if (mmc->card_caps & MMC_MODE_HS) {
 			if (mmc->card_caps & MMC_MODE_HS_52MHz)
+			{
+				debug("%s: MMC_MODE_HS_52MHz\n", __func__);
 				mmc->tran_speed = 52000000;
+			}
 			else
+			{
+				debug("%s: MMC_MODE_HS\n", __func__);
 				mmc->tran_speed = 26000000;
+			}
 		}
 	}
 
+	debug("%s: mmc_set_clock(%d)\n", __func__, mmc->tran_speed);
 	mmc_set_clock(mmc, mmc->tran_speed);
 
 	/* Fix the block length for DDR mode */
