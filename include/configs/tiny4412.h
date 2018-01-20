@@ -152,6 +152,7 @@
 		   "setenv spl_addr_tmp;\0" \
 	CONFIG_EXTRA_ENV_ITB \
 	"fdtaddr=40800000\0" \
+	"machid=4608\0" \
 
 /* GPT */
 
